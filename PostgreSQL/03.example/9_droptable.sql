@@ -1,0 +1,1 @@
+select deletemgeometrycolumn('public','cartrajs','mt','mpoint');
