@@ -111,7 +111,17 @@ public class MHausFOV implements MSimilarityMeasure  {
   
 		
 		MGeometryFactory geometryFactory = new MGeometryFactory();
-		double[] tempList = minDistances1.stream().mapToDouble(i -> i).toArray();
+		//double[] tempList = minDistances1.stream().mapToDouble(i -> i).toArray();
+		/*
+		 * update for java 1.7
+		 */
+		double[] tempList = new double[minDistances1.size()];
+		for(int i=0; i<tempList.length; i++)
+		{
+			tempList[i] = minDistances1.get(i);
+		}
+		
+		
 		mdoubleArrayA = geometryFactory.createMDouble(tempList, t_value);
 
 		Collections.sort(minDistances1);

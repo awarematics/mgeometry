@@ -116,7 +116,17 @@ public double measure(MGeometry g1, MGeometry g2,double epsilon,double theta, do
 		minDistances1.add(min);
 	}
 	MGeometryFactory geometryFactory = new MGeometryFactory();
-	double[] tempList = minDistances1.stream().mapToDouble(i -> i).toArray();
+	//double[] tempList = minDistances1.stream().mapToDouble(i -> i).toArray();
+	/*
+	 * update for java 1.7
+	 */
+	double[] tempList = new double[minDistances1.size()];
+	for(int i=0; i<tempList.length; i++)
+	{
+		tempList[i] = minDistances1.get(i);
+	}
+			//minDistances1.stream().mapToDouble(i -> i).toArray();
+	
 	mdoubleArrayA = geometryFactory.createMDouble(tempList, t_value);
 	return c[t1.numOf()-1][t2.numOf()-1];
 }
