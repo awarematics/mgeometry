@@ -106,7 +106,8 @@ public class MHausFOV implements MSimilarityMeasure  {
 				}
 			}
 			minDistances2.add(min);
-		}
+		}     
+		
 
 		MGeometryFactory geometryFactory = new MGeometryFactory();
 		double[] tempList = minDistances1.stream().mapToDouble(i -> i).toArray();
