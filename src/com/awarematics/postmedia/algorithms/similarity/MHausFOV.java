@@ -121,7 +121,7 @@ public class MHausFOV implements MSimilarityMeasure  {
 		result = Math.max(value1, value2);
 		return result;
 	}
-
+  
 	@SuppressWarnings("unused")
 	private double distance(Polygon polygon, Polygon polygon2, double theta) {
 		double number = 0;
