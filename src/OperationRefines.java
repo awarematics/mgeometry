@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 //@WebServlet(name = "GetAndPostExample", urlPatterns = {"/GetAndPostExample"})
-public class SelectTest {
+public class OperationRefines {
 	/*public static void main(String[] args) throws SQLException{
 		String name = Postgresql("select m_astext(mt) from usertrajs where id=1;");
 		System.out.println(name);
@@ -22,11 +22,13 @@ public class SelectTest {
 			e.printStackTrace();
 		}
 		try {
-			connection = DriverManager.getConnection("jdbc:postgresql://169.254.52.252:6000/postgres", "postgres",
-					"postgres");
+			connection = DriverManager.getConnection("jdbc:postgresql://202.31.147.196/experiment", "postgres",
+					"mcalab3408");
 		} catch (SQLException e) { 
 			e.printStackTrace();  
 		} 
+		
+		
 		String temptable =  "CREATE TEMPORARY table t AS "+sql; 
 		statement = connection.createStatement();	
 		int update = statement.executeUpdate(temptable);

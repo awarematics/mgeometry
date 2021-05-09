@@ -40,10 +40,16 @@ CREATE TYPE mvideo AS
 		String[] result = BddDataToPostgre("D://train/", "mvideo");
 		String writerContent = "";
 		//System.out.println(result.length);
+		/*
 		for (int i = 0; i < result.length; i++) {
 			writerContent = writerContent + " UPDATE uservideos \r\n SET mv  = append(mv , '" + result[i]
 					+ "')\r\n" + " WHERE id = " + (i + 1) + ";\r\n\n\n";
 		}
+		*/
+		for (int i = 0; i < result.length; i++) {
+		writerContent = writerContent + result[i];
+		}
+		
 		File file = new File("D:\\append_mvideo.txt");
 		if (!file.exists()) {
 			file.createNewFile();
@@ -58,7 +64,7 @@ CREATE TYPE mvideo AS
 	public static String[] BddDataToPostgre(String uris, String type) throws IOException {
 		String[] bdd = null;
 		ArrayList<String> bddString = new ArrayList<String>();
-		for (int numof = 1; numof <= 100; numof++) {
+		for (int numof = 1; numof <= 10000; numof++) {
 			long[] timeArray;
 			try {
 				File file = new File(uris + "/1 (" + numof + ").json");

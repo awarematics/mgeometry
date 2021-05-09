@@ -29,7 +29,7 @@ public class GetAndPostExample extends HttpServlet {
 
 		System.out.println("data:\t" + sql);
 		try {
-			res = SelectTest.Postgresql(sql);
+			res = OperationRefines.Postgresql(sql);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

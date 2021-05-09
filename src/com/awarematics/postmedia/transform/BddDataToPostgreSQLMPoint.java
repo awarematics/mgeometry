@@ -4,11 +4,14 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+
 //import org.postgresql.pljava.annotation.Function;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.locationtech.jts.geom.Coordinate;
+
 import com.awarematics.postmedia.mgeom.MGeometryFactory;
 import com.awarematics.postmedia.types.mediamodel.MPoint;
 
@@ -19,32 +22,46 @@ public class BddDataToPostgreSQLMPoint {
 	static MPoint mv = null;
 	// columnName, 'MVideo((uri , startTime, mpoint, frames, fov),(...))'
 	public static void main(String args[]) throws IOException {
-		String[] result = new String[581];//BddDataToPostgre("E://train/", "mpoint");
-		String writerContent = "";
-		System.out.println(result.length);
-		for (int i = 0; i < result.length; i++) {
+		//ArrayList<MPoint> result = BddDataToPostgre("D://val/", "mpoint");
+		String javasource="";
+		//System.out.println(result.size());
+		
+		
+		for(int i =0;i<=1998;i++)
+		{
+			javasource = javasource+"lineStringDraw(coordinate"+i+");\r\n";
+		}
+		/*for (int i = 0; i < result.size(); i++) {
 			
+			String writerContent = " var coordinate" + i + " = ";
+			Coordinate[] temp = result.get(i).getCoords();
+			writerContent = writerContent + Arrays.toString(temp)+"\r\n";
+			writerContent = writerContent.replaceAll(", NaN", "");
+			writerContent = writerContent.replaceAll("\\(", "\\[");
+			writerContent = writerContent.replaceAll("\\)", "\\]");
+			
+			javasource += writerContent;
 			
 			/*
 				writerContent = writerContent + " UPDATE usertrajs \r\n SET mt  = append(mt , '" + result[i]
 						+ "')\r\n" + " WHERE id = " + (i + 1) + ";\r\n";
-				File file = new File("D:\\mpoint_full"+i+".txt");
+				*///}
+		
+		File file = new File("E:\\mpoint.txt");
 				if (!file.exists()) {
 					file.createNewFile();
 				}
 				FileWriter writer = new FileWriter(file);
-				writer.write(writerContent);
+				writer.write(javasource);
 				writer.flush();
 				writer.close();
-				writerContent = "";*/
-		}
 		
 	}
 	// @Function
-	public static String[] BddDataToPostgre(String uris, String type) throws IOException {
+	public static ArrayList<MPoint> BddDataToPostgre(String uris, String type) throws IOException {
 		String[] bdd = null;
-		ArrayList<String> bddString = new ArrayList<String>();
-		for (int numof = 1; numof <= 70000; numof++) {
+		ArrayList<MPoint> bddString = new ArrayList<MPoint>();
+		for (int numof = 1; numof <= 10000; numof++) {
 			long[] timeArray;
 			try {
 				File file = new File(uris + "/1 (" + numof + ").json");
@@ -78,15 +95,12 @@ public class BddDataToPostgreSQLMPoint {
 				MGeometryFactory geometryFactory = new MGeometryFactory();				
 				mv = geometryFactory.createMPoint(coordinate1,timeArray);
 				if (mv.numOf() != 0) {
-					bddString.add(mv.toGeoString());
+					bddString.add(mv);
 				}
 			} catch (Exception e) {
 				continue;
 			}
 		}
-		bdd = new String[bddString.size()];
-		for (int i = 0; i < bdd.length; i++)
-			bdd[i] = bddString.get(i);
-		return bdd;
+		return bddString;
 	}
 }
