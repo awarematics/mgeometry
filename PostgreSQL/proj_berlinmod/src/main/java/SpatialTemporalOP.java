@@ -43,8 +43,8 @@ public class SpatialTemporalOP {
 		MGeometryFactory geometryFactory = new MGeometryFactory();
 		MWKTReader reader = new MWKTReader(geometryFactory);
 		MGeometry mg1 = (MGeometry) reader.read(mgstring);
-		if (mg1.startTime() > (long)instant || mg1.endTime() < (long)instant) {	
-			return "null";
+		if (mg1.startTime() > (long)instant && mg1.endTime() < (long)instant) {	
+			return null;
 		}
 		return mg1.snapshot((long)instant).toText();
 	}
@@ -55,7 +55,7 @@ public class SpatialTemporalOP {
 		MGeometryFactory geometryFactory = new MGeometryFactory();
 		MWKTReader reader = new MWKTReader(geometryFactory);
 		MGeometry mg1 = (MGeometry) reader.read(mgstring);
-		String from = periodstring.split(", ")[0].replace("Period (", "");
+		String from = periodstring.split(", ")[0].replace("(", "");
 		String to = periodstring.split(", ")[1].replace(")", "");
 		// 3 ways   contains  insides  intersects
 		GeometryFactory geometryFactorys = new GeometryFactory();

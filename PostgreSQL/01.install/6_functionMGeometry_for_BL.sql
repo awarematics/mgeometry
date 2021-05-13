@@ -60,35 +60,39 @@ ALTER FUNCTION public.m_astext(mpoint)
     
     
     
---m_snapshot(mpoint, double/bigint) geometry    
+--m_times(mpoint, double/bigint) geometry    
   
 
-CREATE OR REPLACE FUNCTION public.m_snapshot(mpoint, double precision)
-RETURNS setof geometry AS 
-$BODY$
+CREATE OR REPLACE FUNCTION public.m_times(
+	mpoint, double precision)
+    RETURNS setof geometry
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE STRICT 
+AS $BODY$
 DECLARE
 	f_mgeometry			alias for $1;
 	f_double			alias for $2;
 	f_mgeometry_segtable_name	char(200);
-	results				text;
 	sql					text;
 	trajid				integer;
 	mpid                integer;
-	res					geometry;
+	res					int8range;
+	results				text;
 BEGIN
 	sql := 'select f_segtableoid  from mgeometry_columns where  f_segtableoid = ' ||quote_literal(f_mgeometry.segid);
 	EXECUTE sql INTO trajid;
 	sql := 'select f_mgeometry_segtable_name  from mgeometry_columns where f_segtableoid = ' ||quote_literal(trajid );
 	EXECUTE sql INTO f_mgeometry_segtable_name;
     mpid := f_mgeometry.moid;	
-	sql := 'select m_snapshot(wkttraj, ' || (f_double) ||')::geometry from ' || (f_mgeometry_segtable_name) ||' where mpid = ' ||(mpid);
-	 RAISE info '%', sql;
-    RETURN QUERY EXECUTE sql;
+		sql := 'select m_snapshot(wkttraj, ' || (f_double)::bigint ||') from ' || (f_mgeometry_segtable_name) ||' where mpid =' ||(mpid)|| ' AND timerange @>'|| (f_double)::bigint;
+		EXECUTE sql into results;
+    	RETURN QUERY SELECT st_geomfromtext(results);
 END
-$BODY$
-	LANGUAGE plpgsql VOLATILE STRICT
-	COST 100;  	
-		
+$BODY$;
+ALTER FUNCTION public.m_times(mpoint, double precision)
+    OWNER TO postgres;	
+
 	
 	
 	
@@ -181,30 +185,82 @@ DECLARE
 	mpid                integer;
 	res					geometry;
 	temps				boolean;
+	mbr					geometry;
 BEGIN
 	sql := 'select f_segtableoid  from mgeometry_columns where  f_segtableoid = ' ||quote_literal(f_mgeometry.segid);
 	EXECUTE sql INTO trajid;
-		RAISE info '%', trajid;
 	sql := 'select f_mgeometry_segtable_name  from mgeometry_columns where f_segtableoid = ' ||quote_literal(trajid);
 	EXECUTE sql INTO f_mgeometry_segtable_name;
     mpid := f_mgeometry.moid;	
-	sql := 'select trajectory from ' || (f_mgeometry_segtable_name) ||' where mpid = ' ||(mpid);
-	RAISE info '%', sql;
-	execute sql into res;
-RAISE info '%', ST_Intersects(res, f_geometry);
-    RETURN QUERY EXECUTE 'SELECT ' ||ST_Intersects(res, f_geometry);
+	
+	sql := 'select mbr from ' || (f_mgeometry_segtable_name) ||' where mpid = ' ||(mpid);
+	execute sql into mbr;
+	IF(ST_Intersects(mbr, f_geometry)) THEN
+		sql := 'select trajectory from ' || (f_mgeometry_segtable_name) ||' where mpid = ' ||(mpid);
+		execute sql into res;
+    	RETURN QUERY EXECUTE 'SELECT ' ||ST_Intersects(res, f_geometry);
+	END IF;
 END
 $BODY$;
 ALTER FUNCTION public.m_sintersects(mpoint, geometry)
     OWNER TO postgres;	
+	
 
+CREATE OR REPLACE FUNCTION public.m_dwithin(mpoint, mpoint, double precision)
+RETURNS setof boolean AS 
+$BODY$
+DECLARE
+	f_mgeometry1			alias for $1;
+	f_mgeometry2			alias for $2;
+	f_mgeometry3			alias for $3;
+	f_mgeometry_segtable_name	char(200);
+	f_mgeometry_segtable_name2	char(200);
+	sql					text;
+	trajid				integer;
+	trajid2				integer;
+	mpid                integer;
+	mpid2                integer;
+	mpoint1				geometry;
+	mpoint2				geometry;
+	booldis				boolean;
+	
+BEGIN
+	sql := 'select f_segtableoid  from mgeometry_columns where  f_segtableoid = ' ||quote_literal(f_mgeometry1.segid);
+	EXECUTE sql INTO trajid;
+	sql := 'select f_mgeometry_segtable_name  from mgeometry_columns where f_segtableoid = ' ||quote_literal(trajid );
+	EXECUTE sql INTO f_mgeometry_segtable_name;
+    mpid := f_mgeometry1.moid;	
+
+
+	sql := 'select f_segtableoid  from mgeometry_columns where  f_segtableoid = ' ||quote_literal(f_mgeometry2.segid);
+	EXECUTE sql INTO trajid2;
+	sql := 'select f_mgeometry_segtable_name  from mgeometry_columns where f_segtableoid = ' ||quote_literal(trajid2 );
+	EXECUTE sql INTO f_mgeometry_segtable_name2;
+    mpid2 := f_mgeometry2.moid;	
+
+	sql := 'select mbr from ' || (f_mgeometry_segtable_name2) ||' where mpid = ' ||(mpid2);
+   	EXECUTE sql INTO mpoint2;
+	sql := 'select mbr from ' || (f_mgeometry_segtable_name) ||' where mpid = ' ||(mpid);
+    EXECUTE sql INTO mpoint1;
+	
+	IF(mpoint1 && ST_expand(mpoint2, 0.000003)) THEN		
+    	RETURN QUERY select m_spatial(f_mgeometry1) && ST_expand(m_spatial(f_mgeometry2), 0.000003);
+	END IF;
+END
+$BODY$
+	LANGUAGE plpgsql VOLATILE STRICT
+	COST 100;
+		
+
+	
 
 --m_mindistance(mpoint, mpoint) double
+
 
 CREATE OR REPLACE FUNCTION public.m_mindistance(
 	mpoint,
 	mpoint)
-    RETURNS double precision
+    RETURNS setof double precision
     LANGUAGE 'plpgsql'
 
     COST 100
@@ -214,9 +270,12 @@ DECLARE
 	f_mgeometry1			alias for $1;
 	f_mgeometry2			alias for $2;
 	f_mgeometry_segtable_name	char(200);
+	f_mgeometry_segtable_name2	char(200);
 	sql					text;
 	trajid				integer;
+	trajid2				integer;
 	mpid                integer;
+	mpid2                integer;
 	mpoint1				geometry;
 	mpoint2				geometry;
 	mindouble			double precision;
@@ -226,22 +285,23 @@ BEGIN
 	sql := 'select f_mgeometry_segtable_name  from mgeometry_columns where f_segtableoid = ' ||quote_literal(trajid );
 	EXECUTE sql INTO f_mgeometry_segtable_name;
     mpid := f_mgeometry1.moid;	
-	sql := 'select trajectory from ' || (f_mgeometry_segtable_name) ||' where mpid = ' ||(mpid);
-    EXECUTE sql INTO mpoint1;
-	
-	
+
+
 	sql := 'select f_segtableoid  from mgeometry_columns where  f_segtableoid = ' ||quote_literal(f_mgeometry2.segid);
-	EXECUTE sql INTO trajid;
-	sql := 'select f_mgeometry_segtable_name  from mgeometry_columns where f_segtableoid = ' ||quote_literal(trajid );
-	EXECUTE sql INTO f_mgeometry_segtable_name;
-    mpid := f_mgeometry2.moid;	
-	sql := 'select trajectory from ' || (f_mgeometry_segtable_name) ||' where mpid = ' ||(mpid);
-    EXECUTE sql INTO mpoint2;
-	mindouble := st_distance(mpoint1, mpoint2);	
-	return mindouble;
+	EXECUTE sql INTO trajid2;
+	sql := 'select f_mgeometry_segtable_name  from mgeometry_columns where f_segtableoid = ' ||quote_literal(trajid2 );
+	EXECUTE sql INTO f_mgeometry_segtable_name2;
+    mpid2 := f_mgeometry2.moid;	
+
+	IF(f_mgeometry1.moid != f_mgeometry2.moid) THEN
+			sql := 'select trajectory from ' || (f_mgeometry_segtable_name2) ||' where mpid = ' ||(mpid2);
+   			EXECUTE sql INTO mpoint2;
+			sql := 'select trajectory from ' || (f_mgeometry_segtable_name) ||' where mpid = ' ||(mpid);
+    		EXECUTE sql INTO mpoint1;
+    		RETURN QUERY select st_distance(mpoint1, mpoint2);
+	END IF;
 END
 $BODY$;
-
 ALTER FUNCTION public.m_mindistance(mpoint, mpoint)
     OWNER TO postgres;
 	

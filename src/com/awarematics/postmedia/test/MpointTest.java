@@ -2,7 +2,6 @@ package com.awarematics.postmedia.test;
 
 import java.io.IOException;
 
-import com.awarematics.postmedia.algorithms.distance.MovingDistance;
 import com.awarematics.postmedia.algorithms.similarity.MHausdorff;
 import com.awarematics.postmedia.io.MWKTReader;
 import com.awarematics.postmedia.mgeom.MGeometryFactory;
@@ -26,13 +25,16 @@ public class MpointTest {
 		//PrecisionModel precisionModel = new PrecisionModel(1000);
 		MGeometryFactory geometryFactory = new MGeometryFactory();
 		MWKTReader reader = new MWKTReader(geometryFactory);	  		  
-		MPoint mp3 = (MPoint)reader.read("MPOINT ((13.43593 52.41721) 1180191600000, (13.43593 52.41721) 1180309182881)");
+		MPoint mp3 = (MPoint)reader.read("MPOINT ((13.27861 52.57814) 1180334807943, (13.27861 52.57814) 1180389003917)");
 		Point mp2 = (Point)reader2.read("POINT (13.4359 52.41721)");
-		double k = 1180309182881d;
-		//System.out.println(mp3.snapshot((long)k));	
-		System.out.println((mp3.time(1)).toGeoString());	
-		Point point = geometryFactory2.createPoint(new Coordinate(mp3.spatial().getCoordinates()[0]));
+		String k = "1180334807943";
 		
-		System.out.println((point.toText()));	
+		
+
+		System.out.println(mp3.snapshot(Long.valueOf(k)));	
+		//System.out.println((mp3.time(1)).toGeoString());	
+		//Point point = geometryFactory2.createPoint(new Coordinate(mp3.spatial().getCoordinates()[0]));
+		
+		//System.out.println((point.toText()));	
 	}
 }
