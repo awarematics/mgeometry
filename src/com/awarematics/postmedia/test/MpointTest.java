@@ -30,7 +30,7 @@ public class MpointTest {
 		Point mp2 = (Point)reader2.read("POINT (13.4359 52.41721)");
 		double k = 1180309182881d;
 		//System.out.println(mp3.snapshot((long)k));	
-		System.out.println((mp3.spatial().distance(mp2)));	
+		System.out.println((mp3.time(1)).toGeoString());	
 		Point point = geometryFactory2.createPoint(new Coordinate(mp3.spatial().getCoordinates()[0]));
 		
 		System.out.println((point.toText()));	

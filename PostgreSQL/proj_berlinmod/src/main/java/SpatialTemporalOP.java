@@ -58,7 +58,7 @@ public class SpatialTemporalOP {
 		String from = periodstring.split(", ")[0].replace("Period (", "");
 		String to = periodstring.split(", ")[1].replace(")", "");
 		// 3 ways   contains  insides  intersects
-		GeometryFactory geometryFactorys = new GeometryFactory(precisionModel, 0);
+		GeometryFactory geometryFactorys = new GeometryFactory();
 		WKTReader readers = new WKTReader( geometryFactorys );
 		LineString geometry1 = (LineString) readers.read("LINESTRING("+from+" 0, "+to+" 0)");
 		LineString geometry2 = (LineString) readers.read("LINESTRING("+mg1.startTime()+" 0, "+mg1.endTime()+" 0)");
@@ -106,7 +106,7 @@ public class SpatialTemporalOP {
 					return (double)(mg1.getTimes()[i]);
 				}
 			}
-		return null;
+		return 0;
 	}
 	
 	//--m_eventtime(mpoint,geom, double) double
@@ -132,7 +132,7 @@ public class SpatialTemporalOP {
 			}
 		}
 		
-		return null;
+		return 0;
 	}
 	//--m_eventposition(mpoint, geom, double) geometry
 	public static String m_eventposition(String mgs1, String mgs2, double doubles)
@@ -168,11 +168,14 @@ public class SpatialTemporalOP {
 			MGeometry mg1 = (MGeometry) reader.read(mgstring);	
 			String from = periodstring.split(", ")[0].replace("Period (", "");
 			String to = periodstring.split(", ")[1].replace(")", "");
-			for(int i =0;i<mg1.numOf();i++)
-			{
-				if(mg1.time(i)>=Long.parseLong(from) && mg1.time(i)<=Long.parseLong(to))
+			
+			GeometryFactory geometryFactorys = new GeometryFactory();
+			WKTReader readers = new WKTReader( geometryFactorys );
+			LineString geometry1 = (LineString) readers.read("LINESTRING("+from+" 0, "+to+" 0)");
+			LineString geometry2 = (LineString) readers.read("LINESTRING("+mg1.startTime()+" 0, "+mg1.endTime()+" 0)");
+			if (geometry1.intersects(geometry2))
 					return mg1.slice(Long.parseLong(from), Long.parseLong(to)).toGeoString();
-			}
+	
 			return null;
 		}
 
@@ -200,7 +203,7 @@ public class SpatialTemporalOP {
 			WKTReader readers = new WKTReader(geometryFactorys);
 			MGeometry mg1 = (MGeometry) reader.read(mgs1);
 			Geometry mg2 = (Geometry) readers.read(mgs2);
-			if (mg1.spatial().touches(mg2))//
+			if (mg1.spatial().crosses(mg2))//
 				return true;
 			else
 				return false;
@@ -208,7 +211,7 @@ public class SpatialTemporalOP {
 		
 	//--m_meets(mpoint, geom) bool
 	 @Function
-		public static String m_meets(String mgs1, String mgs2)
+		public static boolean m_meets(String mgs1, String mgs2)
 				throws ParseException, org.locationtech.jts.io.ParseException {
 		 MGeometryFactory geometryFactory = new MGeometryFactory();
 			GeometryFactory geometryFactorys = new GeometryFactory();
@@ -216,14 +219,14 @@ public class SpatialTemporalOP {
 			WKTReader readers = new WKTReader(geometryFactorys);
 			MGeometry mg1 = (MGeometry) reader.read(mgs1);
 			Geometry mg2 = (Geometry) readers.read(mgs2);
-			if (mg1.spatial().meet(mg2))//
+			if (mg1.spatial().touches(mg2))//
 				return true;
 			else
 				return false;
 		}
 	//--m_insides(mpoint, geom) bool
 	 @Function
-		public static String m_insides(String mgs1, String mgs2)
+		public static boolean m_insides(String mgs1, String mgs2)
 				throws ParseException, org.locationtech.jts.io.ParseException {
 		 MGeometryFactory geometryFactory = new MGeometryFactory();
 			GeometryFactory geometryFactorys = new GeometryFactory();
@@ -238,7 +241,7 @@ public class SpatialTemporalOP {
 		}
 	//--m_disjoints(mpoint, mpoint, period) 
 	 @Function
-		public static String m_disjoints(String mgs1, String mgs2)
+		public static boolean m_disjoints(String mgs1, String mgs2)
 				throws ParseException, org.locationtech.jts.io.ParseException {
 		 MGeometryFactory geometryFactory = new MGeometryFactory();
 			GeometryFactory geometryFactorys = new GeometryFactory();
