@@ -220,49 +220,54 @@ SELECT L.Licence, C.Model AS Model
 FROM Cars C, Licences L
 WHERE C.Licence = L.Licence;
 ```
-### 2. How many vehicles exist that are “passenger" cars?
+### 2. How many vehicles exist that are "passenger" cars?
 ```
 SELECT COUNT (Licence)
 FROM Cars C
-WHERE Type = 'passanger';
+WHERE Type = 'passenger';
 ```
-### 3. Where have the vehicles with licenses from Licences1 been at each of the instants from
-Instants1?
+### 3. Where have the vehicles with licenses from Licences been at each of the instants from QueryInstants?
+```
+SELECT L.Licence AS Licence, I.Instant AS Instant, m_snapshot(C.mt, I.Instant) AS metPos
+FROM Cars C, Licences L, QueryInstants I
+WHERE C.licence = L.licence 
+AND m_tintersects(C.mt, I.Instant); 
+```
+### 4. Which vehicles have passed the points from QueryPoints?
+```
+	
+explain analyze 
+WITH CarList AS (
+SELECT  P.PointId, P.geom, C.licence, m_sintersects(C.mt, P.geom) AS intersects
+FROM Cars C, QueryPoints P
+ORDER BY P.PointId
+)
+SELECT C.PointId, C.geom, C.licence, C.intersects
+FROM CarList C
+where C.intersects= TRUE
 
 ```
-SELECT L.Licence AS Licence, I.Instant AS Instant, m_spatial(C.mp, I.Instant) AS metPos
-FROM Cars C, Licences L, Instants I
-WHERE C.licence = L.licence 
-AND m_tintersects(C.mp, I.Instant);
+### 5. What is the minimum distance between places, where a vehicle with a license from Licences and a vehicle with a license from Licences have been?
 ```
-### 4. Which vehicles have passed the points from Points?
-```
-SELECT P.PointId, P.geom, C.licence
-FROM Cars C, Points P
-WHERE m_mintersects(C.mp, P.geom)
-```
-### 5. What is the minimum distance between places, where a vehicle with a license from Licences1 and a vehicle with a license from Licences2 have been?
-```
-SELECT C1.Licence AS Licence1, C2.Licence AS Licence2, m_mindistance(C1.mp,C2.mp) AS MinDist
+SELECT C1.Licence AS Licence1, C2.Licence AS Licence2, m_mindistance(C1.mt,C2.mt) AS MinDist
 FROM Cars C1, Licences L1, Cars C2, Licences L2
 WHERE C1.CarId <> C2.CarId 
-AND L1.CarId = C1.CarId AND C2.CarId = L2.CarId
+AND L1.LicenceId = C1.CarId AND C2.CarId = L2.LicenceId
 ``` 
-###  6. What are the pairs of trips from Licences 1 that have ever been as close as 10m or less to each other?
+###  6. What are the pairs of trips from Licences that have ever been as close as 10m or less to each other?
 ```
 SELECT C1.Licence AS Licence1, C2.Licence AS Licence2
 FROM Cars C1, Cars C2
 WHERE C1.CarId <> C2.CarId 
-AND st_dwithin(m_bbox(C1.mp), m_bbox(C2.mp), 10.0)
-AND st_dwithin(m_spatial(C1.mp), m_spatial(C2.mp), 10.0)
+AND st_dwithin(m_spatial(C1.mt), m_spatial(C2.mt), 10.0)
 ```
-###  7. What are the licence plate numbers of the “passenger" cars that have reached the points from Points1 first of all “passenger" cars during the complete observation period?
+###  7. What are the licence plate numbers of the "passenger" cars that have reached the points from QueryPoints first of all "passenger" cars during the complete observation period?
 ```
 WITH CarList AS (
-SELECT C.Licence, P.PointId, P.geom, m_eventtime(C.mp, P.geom) AS Instant
-FROM Cars C, Points P
+SELECT C.Licence, P.PointId, P.geom, m_eventtime(C.mt, P.geom) AS Instant
+FROM Cars C, QueryPoints P
 WHERE st_dwithin(m_spatial(C.mp), P.geom, 0.0)
-AND C.Type = 'passanger'
+AND C.Type = 'passenger'
 )
 SELECT CL1.Licence, CL1.PointId, CL1.geom, CL1.Instant
 FROM CarList CL1 
@@ -273,89 +278,84 @@ WHERE CL1.PointId = CL2.PointId
 ORDER BY CL1.PointId, CL1.Licence
 )
 ```
-### 8. What are the overall travelled distances of the vehicles with licence plate numbers from Licences1 during the periods from Periods1?
+### 8. What are the overall travelled distances of the vehicles with licence plate numbers from Licences during the periods from QueryPeriods?
 ```
 SELECT C.Licence, P.PeriodId, P.Period,
-SUM(m_timeAtCummulative(m_slice(C.mp, P.Period))) AS Distance
-FROM Cars C, Periods P
-WHERE M_tIntersects(C.mp, P.Period) IS NOT NULL
-GROUP BY P.PeriodId, P.Period, C.Licence,C.mp
+SUM(m_timeAtCummulative(m_slice(C.mt, P.Period))) AS Distance
+FROM Cars C, QueryPeriods P
+WHERE M_tIntersects(C.mt, P.Period) IS NOT NULL
+GROUP BY P.PeriodId, P.Period, C.Licence,C.mt
 ```
-### 9. What is the longest distance that was travelled by a vehicle during each of the periods from Periods1?
+### 9. What is the longest distance that was travelled by a vehicle during each of the periods from QueryPeriods?
 ```
 SELECT C.CarId, P.PeriodId, P.Period,
-m_max(m_timeAtCummulative(m_slice(C.mp, P.Period))) AS Distance
-FROM Cars C, Periods P
-WHERE m_tintersects(C.mp, P.Period) IS NOT NULL
-GROUP BY P.PeriodId, P.Period, C.CarId,C.mp
+max(m_timeAtCummulative(m_slice(C.mt, P.Period))) AS Distance
+FROM Cars C, QueryPeriods P
+WHERE m_tintersects(C.mt, P.Period) IS NOT NULL
+GROUP BY P.PeriodId, P.Period, C.CarId,C.mt
 ```
-### 10. When and where did the vehicles with licence plate numbers from Licences1 meet other vehicles (distance < 3m) and what are the latters’ licences?
+### 10. When and where did the vehicles with licence plate numbers from Licences meet other vehicles (distance < 3m) and what are the latters' licences?
 ```
 SELECT C1.Licence AS QueryLicence , C2.Licence AS OtherLicence,
-m_eventposition(C1.mp, C2.mp, 3) AS meetPos, m_eventtime(C1.mp, C2.mp, 3) AS meetTime
+m_eventposition(C1.mt, C2.mt, 3) AS meetPos, m_eventtime(C1.mt, C2.mt, 3) AS meetTime
 FROM Cars C1, Cars C2, Licences L1
-WHERE C1.Licence = L1.Licence AND C2.Licence <> C1. Licence
-AND st_dwithin(m_bbox(C1.mp), m_bbox(C2.mp), 3.0)
-AND m_tintersects(C1.mp, m_time(C2.mp));
+WHERE C1.Licence = L1.Licence AND C2.Licence <> C1.Licence
+AND st_dwithin(m_spatial(C1.mt), m_spatial(C2.mt), 3.0)
+AND m_tintersects(C1.mt, m_time(C2.mp));
 ```
-### 11. Which vehicles passed a point from Points1 at one of the instants from Instants1?
+### 11. Which vehicles passed a point from QueryPoints at one of the instants from QueryInstants?
  ```
 SELECT C.licence AS Licence, P.geom AS QueryPoint, I.instant As Instant
-FROM Cars C, Points P, Instants I
-WHERE m_passes(C.mp,P.geom)
-AND m_tintersects(C.mp, I.instant)
+FROM Cars C, QueryPoints P, QueryInstants I
+WHERE m_passes(C.mt,P.geom)
+AND m_tintersects(C.mt, I.instant)
 ```
-### 12. Which vehicles met at a point from Points1 at an instant from Instants1?
+### 12. Which vehicles met at a point from QueryPoints at an instant from QueryInstants?
 ```
-
-SELECT C1.licence AS Licence1, C2.licence AS Licence2, P.geom AS QueryPoint, I.instant As Instant
-FROM Cars C1, Cars C2, Points P, Instants I
-WHERE m_meet(C1.mp, P.geom, I.instant)
-AND m_meet(C2.mp,P.geom, I.instant)
-AND C1.licence<>C2.licence
+SELECT C1.licence AS Licence1, P.geom AS QueryPoint, I.instant As Instant
+FROM Cars C1, QueryPoints P, QueryInstants I
+WHERE m_meets(C1.mt, P.geom)
+AND m_tintersects(C1.mt, I.instant)
 ```
-### 13. Which vehicles travelled within one of the regions from Regions1 during the periods from Periods1?
+### 13. Which vehicles travelled within one of the regions from QueryRegions during the periods from QueryPeriods?
 ```
-SELECT C1.CarId AS CarId, P.period AS Period, R.regions AS QueryRegions
-FROM Cars C1, Periods P, Regions R
-WHERE m_tintersects(C1.mp, P.period)
-AND m_mstayIn(C1.mp, R.regions)
+SELECT C1.CarId AS CarId, P.period AS Period, R.geom AS QueryRegions
+FROM Cars C1, QueryPeriods P, QueryRegions R
+WHERE m_tintersects(C1.mt, P.period)
+AND m_mstayIn(C1.mt, R.geom)
 ```
-### 14. Which vehicles travelled within one of the regions from Regions1 at one of the instants from Instants1?
+### 14. Which vehicles travelled within one of the regions from QueryRegions at one of the instants from QueryInstants?
 ```
-SELECT C1.CarId AS CarId, I.Instant AS Instant, R.regions AS QueryRegions
-FROM Cars C1, Instants I, Regions R
-WHERE ST_WITHIN(m_snapshot(C1.mp, I.instant), R.regions) 
+SELECT C1.CarId AS CarId, I.Instant AS Instant, R.geom AS QueryRegions
+FROM Cars C1, QueryInstants I, QueryRegions R
+WHERE ST_WITHIN(m_spatial(C1.mt), R.geom) 
+AND m_tintersects(C1.mt, I.instant)
 ```
-### 15. Which vehicles passed a point from Points1 during a period from Periods1?
+### 15. Which vehicles passed a point from QueryPoints during a period from QueryPeriods?
 ```
 SELECT C1.CarId AS CarId, Pr.period AS Period, P.geom AS QueryPoint
-FROM Cars C1, Periods Pr, Points P
-WHERE m_passes (m_slice(C1.mp,Pr.period), P.geom)
+FROM Cars C1, QueryPeriods Pr, QueryPoints P
+WHERE m_passes(C1.mt, P.geom)
+AND m_tintersects(C1.mt, Pr.period)
 ```
-### 16. List the pairs of licences for vehicles, the first from Licences1, the second from Licences2,
-where the corresponding vehicles are both present within a region from Regions1 during a period
-from Period1, but do not meet each other there and then.
-
+### 16. List the pairs of licences for vehicles from Licences where the corresponding vehicles are both present within a region from Regions1 during a period from QueryPeriod, but do not meet each other there and then.
 ```
-SELECT C1.Licence, C2.Licence, P.period, R.regions 
-FROM Cars C1, Cars C2, Periods P, Regions R
-WHERE m_any(m_inside(m_slice(C1.mp, (P.period).totime), 
-m_slice(C2.mp, (P.period).totime))) = false
-AND C1.licence <> C2.licence
-And m_any(m_meet(m_slice(C1.mp, (P.period).totime), 
-m_slice(C2.mp, (P.period).totime))) = false
+SELECT C1.Licence, C2.Licence, P.period, R.geom 
+FROM Cars C1, Cars C2, QueryPeriods P, QueryRegions R
+WHERE m_insides(C1.mt, R.geom) 
+AND m_insides(C2.mt, R.geom)
+And m_disjoints(C1.mt,C2.mt,P.period)
 ```
 ### 17. Which points from Points have been visited by a maximum number of different vehicles?
 ```
 
 WITH PointCount AS (
 SELECT P.PointId, COUNT(C.CarId) AS Hits
-FROM Cars C, Points P
-WHERE m_mintersects(C.mp, P.geom )
+FROM Cars C, QueryPoints P
+WHERE m_sintersects(C.mt, P.geom )
 GROUP BY P.PointId 
 )
-SELECT PointId, m_max(P.Hits) 
+SELECT PointId, max(P.Hits) 
 FROM PointCount P
 
 ```
