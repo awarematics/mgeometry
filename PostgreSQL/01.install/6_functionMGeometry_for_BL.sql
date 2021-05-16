@@ -94,6 +94,36 @@ ALTER FUNCTION public.m_times(mpoint, double precision)
     OWNER TO postgres;	
 
 	
+CREATE OR REPLACE FUNCTION public.m_times(
+	mpoint, double precision)
+    RETURNS setof geometry
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE STRICT 
+AS $BODY$
+DECLARE
+	f_mgeometry			alias for $1;
+	f_double			alias for $2;
+	--f_mgeometry_segtable_name	char(200);
+	sql					text;
+	--trajid				integer;
+	mpid                integer;
+	--res					int8range;
+	results				text;
+BEGIN
+	--sql := 'select f_segtableoid  from mgeometry_columns where  f_segtableoid = ' ||quote_literal(f_mgeometry.segid);
+	--EXECUTE sql INTO trajid;
+	--sql := 'select f_mgeometry_segtable_name  from mgeometry_columns where f_segtableoid = ' ||quote_literal(trajid );
+	--EXECUTE sql INTO f_mgeometry_segtable_name;
+    mpid := f_mgeometry.moid;	
+		sql := 'select m_snapshot(wkttraj, ' || (f_double)::bigint ||') from mpoint_120324 where mpid =' ||(mpid)|| ' AND timerange @>'|| (f_double)::bigint;
+		EXECUTE sql into results;
+    	RETURN QUERY SELECT st_geomfromtext(results);
+END
+$BODY$;
+ALTER FUNCTION public.m_times(mpoint, double precision)
+    OWNER TO postgres;	
+	
 	
 	
 
@@ -205,6 +235,44 @@ $BODY$;
 ALTER FUNCTION public.m_sintersects(mpoint, geometry)
     OWNER TO postgres;	
 	
+
+CREATE OR REPLACE FUNCTION public.m_sintersects(
+	mpoint,
+	geometry)
+    RETURNS setof boolean
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE STRICT 
+AS $BODY$
+DECLARE
+	f_mgeometry			alias for $1;
+	f_geometry		alias for $2;
+	--f_mgeometry_segtable_name	char(200);
+	--results				text;
+	sql					text;
+	--trajid				integer;
+	mpid                integer;
+	res					geometry;
+	mbr					geometry;
+BEGIN
+	--sql := 'select f_segtableoid  from mgeometry_columns where  f_segtableoid = ' ||quote_literal(f_mgeometry.segid);
+	--EXECUTE sql INTO trajid;
+	--sql := 'select f_mgeometry_segtable_name  from mgeometry_columns where f_segtableoid = ' ||quote_literal(trajid);
+	--EXECUTE sql INTO f_mgeometry_segtable_name;
+    mpid := f_mgeometry.moid;	
+	
+	sql := 'select mbr from mpoint_120324 where mpid = ' ||(mpid);
+	execute sql into mbr;
+	IF(ST_Intersects(mbr, f_geometry)) THEN
+		sql := 'select trajectory from mpoint_120324 where mpid = ' ||(mpid);
+		execute sql into res;
+    	RETURN QUERY EXECUTE 'SELECT ' ||ST_Intersects(res, f_geometry);
+	END IF;
+END
+$BODY$;
+ALTER FUNCTION public.m_sintersects(mpoint, geometry)
+    OWNER TO postgres;	
+	-----------------------------------------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public.m_dwithin(mpoint, mpoint, double precision)
 RETURNS setof boolean AS 

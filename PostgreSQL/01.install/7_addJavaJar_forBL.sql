@@ -45,4 +45,8 @@ select sqlj.get_classpath('public');
  -----mgeo
  create index IF NOT EXISTS bl_index_segoid on public."mgeometry_columns" using btree (f_segtableoid text_pattern_ops) tablespace pg_default ; 
   create index IF NOT EXISTS bl_index_segtname on public."mgeometry_columns" using btree (f_mgeometry_segtable_name text_pattern_ops) tablespace pg_default ; 
+  
+  
+  	
+  create index IF NOT EXISTS bl_index_mindist on public."mpoint_120324" using btree (st_distance(trajectory, trajectory)) tablespace pg_default ; 
 	

@@ -48,6 +48,14 @@ public class SpatialTemporalOP {
 		}
 		return mg1.snapshot((long)instant).toText();
 	}
+	 @Function
+		public static long M_StartTime(String mgstring) throws ParseException, org.locationtech.jts.io.ParseException {
+			MGeometryFactory geometryFactory = new MGeometryFactory();
+			MWKTReader reader = new MWKTReader(geometryFactory);
+			MGeometry mg1 = (MGeometry) reader.read(mgstring);
+			return mg1.startTime();
+		}
+
 	
 	@Function
 	public static boolean M_tIntersects(String mgstring, String periodstring)

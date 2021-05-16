@@ -236,45 +236,53 @@ SELECT C.Licence As Licence, C.mt AS mpoint
 FROM Cars C, Licences L
 WHERE C.licence = L.licence
 )
-SELECT I.Instant AS Instant, C.Licence, m_times(C.mpoint, I.instant) As Intersects 
+SELECT DISTINCT I.Instant AS Instant, C.Licence, m_snapshots(C.mpoint, I.instant) As Positions 
 FROM QueryInstants I, CarList C;
+
+	
 
 ```
 ### 4. Which vehicles have passed the points from QueryPoints?
 ```
 	
-
 explain analyze 
 WITH CarList AS (
-SELECT  P.PointId, P.geom, m_sintersects(C.mt, P.geom) AS intersects
+SELECT  P.PointId, P.geom, m_sintersects(C.mt, P.geom) AS Intersects
 FROM Cars C, QueryPoints P
 )
 SELECT C.PointId, C.geom
 FROM CarList C
-where C.intersects;
+where C.Intersects;
 
 ```
 ### 5. What is the minimum distance between places, where a vehicle with a license from Licences and a vehicle with a license from Licences have been?
 ```
+
 explain analyze 
-SELECT Distinct C1.Licence AS Licence1, C2.Licence AS Licence2, m_mindistance(C1.mt, C2.mt) AS MinDist
+With CarList AS(
+SELECT Distinct C1.Licence AS Licence1, C2.Licence AS Licence2, C1.mt AS mt1, C2.mt AS mt2
 FROM Cars C1, Licences L1, Cars C2, Licences L2
 WHERE C1.CarId < C2.CarId 
 AND L1.LicenceId = C1.CarId AND C2.CarId = L2.LicenceId
-Order by MinDist
+)
+SELECT m_mindistance(C.mt1, C.mt2) AS MinDist
+FROM CarList C;
 ``` 
 ###  6. What are the pairs of trips from Licences that have ever been as close as 10m or less to each other?
 ```
 
 explain analyze 
 WITH CarList AS (
-SELECT  C1.carid AS carid1, C2.carid AS carid2,  m_dwithin(C1.mt, C2.mt, 10) AS Intersects
+SELECT  C1.Licence AS Licence1, C2.Licence AS Licence2,  m_dwithin(C1.mt, C2.mt, 10) AS Dwithin
 FROM Cars C1, Cars C2
 WHERE C1.CarId < C2.CarId 
 )
-SELECT C.Intersects, C.carid1 , C.carid2 
+SELECT C.Dwithin, C.Licence1 , C.Licence2 
 FROM CarList C
-WHERE C.Intersects
+WHERE C.Dwithin
+
+
+
 
 ```
 ###  7. What are the licence plate numbers of the "passenger" cars that have reached the points from QueryPoints first of all "passenger" cars during the complete observation period?
