@@ -287,20 +287,17 @@ WHERE C.Dwithin
 ```
 ###  7. What are the licence plate numbers of the "passenger" cars that have reached the points from QueryPoints first of all "passenger" cars during the complete observation period?
 ```
+
+explain analyze 
 WITH CarList AS (
-SELECT C.Licence, P.PointId, P.geom, m_eventtime(C.mt, P.geom) AS Instant
+SELECT C.Licence AS Licence, P.Geom AS Geom, C.mt AS mpoint, m_sintersects(C.mt, P.Geom) As Intersects
 FROM Cars C, QueryPoints P
-WHERE st_dwithin(m_spatial(C.mp), P.geom, 0.0)
-AND C.Type = 'passenger'
+WHERE C.Type = 'passenger'
 )
-SELECT CL1.Licence, CL1.PointId, CL1.geom, CL1.Instant
+SELECT DISTINCT CL1.Licence, CL1.Geom, m_eventtime(CL1.mpoint, CL1.Geom) AS Instant
 FROM CarList CL1 
-WHERE CL1.Instant <= All(
-SELECT CL2.Instant
-FROM  CarList CL2 
-WHERE CL1.PointId = CL2.PointId 
-ORDER BY CL1.PointId, CL1.Licence
-)
+WHERE CL1.Intersects
+
 ```
 ### 8. What are the overall travelled distances of the vehicles with licence plate numbers from Licences during the periods from QueryPeriods?
 ```

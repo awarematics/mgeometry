@@ -72,7 +72,7 @@ select * from Periods;
 
 
 create table queryPeriods as (
-select PeriodId, (EXTRACT(EPOCH FROM (begintime AT TIME ZONE 'UTC'))*1000, EXTRACT(EPOCH FROM (endtime AT TIME ZONE 'UTC'))*1000)::period AS Period from Periods)
+select PeriodId, ('(' || EXTRACT(EPOCH FROM (begintime AT TIME ZONE 'UTC'))*1000 ||','|| EXTRACT(EPOCH FROM (endtime AT TIME ZONE 'UTC'))*1000 ||')')::int8range AS period from periods);
 
 
 select * from queryPeriods;

@@ -169,23 +169,23 @@ public class SpatialTemporalOP {
 	//--m_slice(mpoint, period) mgeometry
 	
 	 @Function
-		public static String M_Slice(String mgstring, String periodstring)
-				throws ParseException, org.locationtech.jts.io.ParseException {
+	 public static String M_Slice(String mgstring, String periodstring)
+				throws ParseException, org.locationtech.jts.io.ParseException, java.text.ParseException {
 			MGeometryFactory geometryFactory = new MGeometryFactory();		
 			MWKTReader reader = new MWKTReader(geometryFactory);
 			MGeometry mg1 = (MGeometry) reader.read(mgstring);	
-			String from = periodstring.split(", ")[0].replace("Period (", "");
-			String to = periodstring.split(", ")[1].replace(")", "");
-			
+			String from = periodstring.split(",")[0].replace("[", "");
+			String to = periodstring.split(",")[1].replace(")", "");
+		
 			GeometryFactory geometryFactorys = new GeometryFactory();
 			WKTReader readers = new WKTReader( geometryFactorys );
 			LineString geometry1 = (LineString) readers.read("LINESTRING("+from+" 0, "+to+" 0)");
 			LineString geometry2 = (LineString) readers.read("LINESTRING("+mg1.startTime()+" 0, "+mg1.endTime()+" 0)");
 			if (geometry1.intersects(geometry2))
 					return mg1.slice(Long.parseLong(from), Long.parseLong(to)).toGeoString();
-	
+
 			return null;
-		}
+		} 
 
 	//--m_timeatcummulative(mpoint) double
 	 @Function

@@ -172,13 +172,40 @@ $BODY$
 	LANGUAGE plpgsql VOLATILE STRICT
 	COST 100;
 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+---Q7: m_eventtime() 	
+
+
+CREATE OR REPLACE FUNCTION public.m_eventtime(
+	mpoint,
+	geometry)
+    RETURNS setof double precision
+    LANGUAGE 'plpgsql'
+
+    COST 100
+    VOLATILE STRICT 
+AS $BODY$
+DECLARE
+	f_mgeometry1			alias for $1;
+	f_mgeometry2			alias for $2;
+	sql					text;
+	mpid                integer;
+	res					text;
+BEGIN
+    mpid := f_mgeometry1.moid;
+	res := st_astext(f_mgeometry2);
+	sql := 'select m_eventtime(wkttraj, '||quote_literal(ST_AsText(f_mgeometry2))||') from mpoint_120324 where mpid = ' ||(mpid);
+    RETURN QUERY EXECUTE sql;
+END
+$BODY$;
+ALTER FUNCTION public.m_eventtime(mpoint, geometry)
+    OWNER TO postgres;
 
 
 
 
-
-
-
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+---Q7: m_eventtime() 	
 
 
 
