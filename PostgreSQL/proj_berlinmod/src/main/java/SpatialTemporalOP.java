@@ -184,7 +184,7 @@ public class SpatialTemporalOP {
 			if (geometry1.intersects(geometry2))
 					return mg1.slice(Long.parseLong(from), Long.parseLong(to)).toGeoString();
 
-			return null;
+			return "null";
 		} 
 
 	//--m_timeatcummulative(mpoint) double

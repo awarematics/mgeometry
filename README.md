@@ -301,19 +301,29 @@ WHERE CL1.Intersects
 ```
 ### 8. What are the overall travelled distances of the vehicles with licence plate numbers from Licences during the periods from QueryPeriods?
 ```
-SELECT C.Licence, P.PeriodId, P.Period,
-SUM(m_timeAtCummulative(m_slice(C.mt, P.Period))) AS Distance
-FROM Cars C, QueryPeriods P
-WHERE M_tIntersects(C.mt, P.Period) IS NOT NULL
-GROUP BY P.PeriodId, P.Period, C.Licence,C.mt
+
+explain analyze 
+WITH CarList AS (
+SELECT C.Licence, (m_slice(C.mt, P.Period)) AS Mpoint, P.PeriodId 
+FROM  Cars C, Licences L, QueryPeriods P
+WHERE C.Licence = L.licence
+)
+SELECT C.Licence, C.PeriodId, m_timeAtCummulative(C.Mpoint) AS Distance
+FROM CarList C 
+GROUP BY C.Licence, C.PeriodId, C.Mpoint
+
 ```
 ### 9. What is the longest distance that was travelled by a vehicle during each of the periods from QueryPeriods?
 ```
-SELECT C.CarId, P.PeriodId, P.Period,
-max(m_timeAtCummulative(m_slice(C.mt, P.Period))) AS Distance
-FROM Cars C, QueryPeriods P
-WHERE m_tintersects(C.mt, P.Period) IS NOT NULL
-GROUP BY P.PeriodId, P.Period, C.CarId,C.mt
+
+explain analyze 
+WITH CarList AS (
+SELECT m_timeAtCummulative(m_slice(C.mt, P.Period)) AS Distance, P.PeriodId 
+FROM  Cars C, QueryPeriods P
+)
+SELECT MAX(CT.Distance)
+FROM CarList CT
+
 ```
 ### 10. When and where did the vehicles with licence plate numbers from Licences meet other vehicles (distance < 3m) and what are the latters' licences?
 ```

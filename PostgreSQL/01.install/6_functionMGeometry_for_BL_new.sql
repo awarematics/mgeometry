@@ -194,7 +194,7 @@ DECLARE
 BEGIN
     mpid := f_mgeometry1.moid;
 	res := st_astext(f_mgeometry2);
-	sql := 'select m_eventtime(wkttraj, '||quote_literal(ST_AsText(f_mgeometry2))||') from mpoint_120324 where mpid = ' ||(mpid);
+	sql := 'select m_eventtime(wkttraj, '||quote_literal(res)||') from mpoint_120324 where mpid = ' ||(mpid);
     RETURN QUERY EXECUTE sql;
 END
 $BODY$;
@@ -205,10 +205,65 @@ ALTER FUNCTION public.m_eventtime(mpoint, geometry)
 
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
----Q7: m_eventtime() 	
+---Q8: m_timeatcummulative()  	m_slice()	
 
 
 
+CREATE OR REPLACE FUNCTION public.m_timeatcummulative(text)
+RETURNS double precision AS 
+$BODY$
+DECLARE
+	f_mgeometry			alias for $1;
+	sql			text;
+	res		double precision;
+BEGIN
+  sql:= 'SELECT ' || timeAtCummulativeDistance(f_mgeometry);
+   execute sql into res;
+   return res;
+END
+$BODY$
+	LANGUAGE plpgsql VOLATILE STRICT
+	COST 100;
+	
+
+CREATE OR REPLACE FUNCTION public.m_slice(
+	mpoint,
+	int8range)
+    RETURNS setof text
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE STRICT 
+AS $BODY$
+DECLARE
+	f_mgeometry			alias for $1;
+	f_period			alias for $2;
+	sql					text;
+	mpid                integer;
+	res					text;
+	queryrange			int8range;
+BEGIN
+    mpid := f_mgeometry.moid;	
+	sql := 'select timerange from mpoint_120324 where mpid = ' ||(mpid);
+	EXECUTE sql into queryrange;
+	IF(queryrange && f_period ) THEN
+		IF (queryrange <@ f_period) THEN
+			sql := 'select wkttraj from mpoint_120324 where mpid = ' ||(mpid) || ' AND timerange <@ '|| quote_literal(f_period); 
+				RETURN QUERY EXECUTE sql;
+	--	ELSE 
+		--	sql := 'select m_slice(wkttraj, '||quote_literal(f_period)||')  from mpoint_120324 where mpid = ' ||(mpid) || 'AND timerange && '|| quote_literal(f_period);
+			-- RETURN QUERY EXECUTE sql;
+		END IF;
+	END IF;
+END
+$BODY$;
+ALTER FUNCTION public.m_slice(mpoint, int8range)
+    OWNER TO postgres;
+    
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+---Q9: m_timeatcummulative()  	m_slice()	
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+---Q10: ()  	()	
 
 
 
