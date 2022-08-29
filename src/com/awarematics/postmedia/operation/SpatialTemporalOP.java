@@ -277,11 +277,12 @@ public class SpatialTemporalOP {
 		MGeometry mg1 = (MGeometry) reader.read(mgs1);
 		Geometry mg2 = (Geometry) readers.read(mgs2);
 		@SuppressWarnings("deprecation")
-		MultiPoint mp = geometryFactorys.createMultiPoint(mg1.getCoords());
-		if (mp.getGeometryN(0).disjoint(mg2) && mp.getGeometryN(mp.getNumGeometries() - 1).within(mg2))// disjoint--within
+		LineString mp = geometryFactorys.createLineString(mg1.getCoords());
+		if (mp.touches(mg2))
 			return true;
 		else
 			return false;
+		
 	}
 
 	// @Function
@@ -340,8 +341,8 @@ public class SpatialTemporalOP {
 		MGeometry mg1 = (MGeometry) reader.read(mgs1);
 		Geometry mg2 = (Geometry) readers.read(mgs2);
 		@SuppressWarnings("deprecation")
-		MultiPoint mp = geometryFactorys.createMultiPoint(mg1.getCoords());
-		if (mp.getGeometryN(0).within(mg2) && mp.getGeometryN(mp.getNumGeometries() - 1).disjoint(mg2))// within--disjoint
+		LineString mp = geometryFactorys.createLineString(mg1.getCoords());
+		if (mp.touches(mg2))
 			return true;
 		else
 			return false;
